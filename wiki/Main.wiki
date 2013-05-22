@@ -1,0 +1,5 @@
+#summary One-sentence summary of this page.
+
+= Introduction =
+
+This very simple little pattern can be used in everything from websites implementing complicated features like undo, to implementing very simple features like command line parsing in a console application.
