@@ -86,3 +86,40 @@ Here we are simulating a update to database and logging. These represent two dif
 One of the requirement of the system is that whenever a change is made to an order, we want to see details of what change was made and if I was building this for real I also want to know who made the change.
 
 Now what I am interested in doing in this example is simplifying this !CommandExecutor, it is basically doing all the work inside that one class, and if we implement more methods there might be awful lot of dependencies. And this is going to become a class that is doing awful lot, and have way too many responsibilities. So we are going to figure out a way to use the command pattern to break this thing up into separate commands that do their own thing and get rid of this class.
+
+= Intent and Applicability =
+  * Represent an action as an object
+
+  * Decouple clients that execute the command from the details and dependencies of the command logic
+
+  * Enables delayed execution
+    * Can queue commands for later execution
+    * If command objects are also persistent, can delay across process restarts
+
+The intent of this pattern is really simple, we want to represent a piece of business logic or just a piece of logic in general, some action, as an object that implements an interface. Lets see how that interface could look like.
+{{{
+public interface ICommand
+{
+  void Execute();
+}
+}}}
+This is the simplest form, we have an interface that has a method on it that doesn't take any arguments and returns nothing. It is basically just a way for our client to be given given something to execute it at a later time when it makes sense.
+
+So this completely decouples the client thats gona call execute from any of the details of how that command will get executed. The client doesn't have to care about any dependencies, all of that stuff will be set up beforehand, and then we can just wire our system together with commands. One of the things this also enables is delayed execution, I can que commands up and execute them later on in a certain order if I like. I can also persist commands if I decide to go further and make my command object support persistence in some way. That I might be able to actually 
+put that thing on disk and bring it back up and execute it later on, without caring exactly what is is going to do I just know that I need to have those instructions run. And this can be incredibly valuable implementing complicated features like undo in a web farm scenario.
+
+*Also Knows As*
+  * Action, Transaction
+You may have heard this command pattern referred to as Action pattern or Transactions those are also very common names for these things.
+
+*Applicability*
+  * Logging
+  * Validation
+  * Undo
+We talk about this a little bit more as we go thru some code, but a number of things you can do with the command pattern is enforce Logging, if your command encapsulates the details of executing some action and then logging the fact that it was executed, if clients are always using commands to execute actions then you know that you're logging is always going to happen, thats one thing we actually use on our website at pluralsight.com. When critical things are happening that need to be logged.
+
+Validation is another thing that is useful with the command pattern as we'll talk about a little bit later.
+
+And Undo functionality in a website, this is another great example of where in a website or in any application, where command object can be used.
+
+If a command has all of the information that it needs to perform some action, it can record everything that it needs to know while it is performing the action in order to be able to reverse that action.
