@@ -3,3 +3,86 @@
 = Introduction =
 
 This very simple little pattern can be used in everything from websites implementing complicated features like undo, to implementing very simple features like command line parsing in a console application.
+
+= Motivating Example =
+  * A command-line order management system
+  * Existing order may be edited, and a log of all changes must be kept
+In order to explain the command pattern I'm going to take the simplest possible example that I can so we can focus on the abstraction of the pattern itself. We're gonna take a command-line order management system, where orders can be created and edited and shipped, and a log of everything that happens to an order has to be kept. And I'm gonna focus on one of these commands that needs to be handled the editing command. Just to give you a little bit of context, I have a program here this is my main app, there is static void main here, and it is just gonna go of an run my first program.
+{{{
+class Program
+{
+  static void Main(String[] arga)
+  {
+    Program1.Run(args);
+  }
+}
+}}}
+I have a second program that looks a little bit different that uses the command pattern strategy that we will look at later. But lets go ahead for now and look at the Run method.
+{{{
+public class Program1
+{
+  public static void Run(string[] args)
+  {
+    if(args.Length == 0)
+    {
+      PrintUsage();
+      return;
+    }
+    var processor = new CommandExecutor();
+    processor.ExecuteCommand(args);
+  }
+
+  private static void PrintUsage()
+  {
+    Console.WriteLine("Usage: LoggingDemo CommandName Arguments");
+    Console.WriteLine("Commands:");
+    Console.WriteLine("  UpdateQuantity number");
+    Console.WriteLine("  CreateOrder");
+    Console.WriteLine("  ShipOrder");
+  }
+}
+}}}
+In the Run method we basically take a look at the arguments that are coming in, this is a command-line application after all. And if we are not passed any arguments on the command-line we go ahead and print out usage information so people can figure out how to use our app. Assuming arguments are passed we create a little helper called !CommandExecutor and we call !ExecuteCommand, now this is not the command pattern, this is just a little helper class thats gona go of and do this work and get us out of our main program.
+{{{
+public class CommandExecutor
+{
+  internal void ExecuteCommand(string[] args)
+  {
+    switch(args[0])
+    {
+      case "UdateQuantity":
+        UpdateQuantity(int.Parse(args[1]));
+        break;
+      case "CreateOrder":
+        CreateOrder();
+        break;
+      case "ShipOrder":
+        ShipOrder();
+        break;
+      default:
+        Console.WriteLine("Unrecognized command");
+        break;
+    }
+  }
+}
+}}}
+Now the first smell that I see here when I walk into this command is a big switch statement, and any time we see a switch statement we should be thinking to ourselves, Hmm maybe there is a better way to do this. But we'll come back to that and deal with that later. Basically what we do is we look at the first argument which tells us which command is to be executed. But the only one that I have implemented is !UpdateQuantity.
+{{{
+private void UpdateQuantity(int newQuantity)
+{
+  // simulate updating a database
+  const int oldQuantity = 5;
+  Console.WriteLine("DATABASE: Updated");
+
+  // simulate logging
+  Console.WriteLine("LOG: Updated order quantity from{0} to {1}", oldQuantity, newQuantity);
+}
+
+void CreateOrder() {}
+void ShipOrder() {}
+}}}
+Here we are simulating a update to database and logging. These represent two different dependencies, dependency on repository of orders, dependency on a log system as well. We only have one order in the system, that keeps me from having to pass around identifiers and things like that, I really want to keep this simple to just focus on the abstraction of the command.
+
+One of the requirement of the system is that whenever a change is made to an order, we want to see details of what change was made and if I was building this for real I also want to know who made the change.
+
+Now what I am interested in doing in this example is simplifying this !CommandExecutor, it is basically doing all the work inside that one class, and if we implement more methods there might be awful lot of dependencies. And this is going to become a class that is doing awful lot, and have way too many responsibilities. So we are going to figure out a way to use the command pattern to break this thing up into separate commands that do their own thing and get rid of this class.
