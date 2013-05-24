@@ -276,3 +276,17 @@ public class NotFoundCommand : ICommand
   }
 }
 }}}
+
+= Related Patterns =
+  * Factory Pattern
+    * Factories are often useful to construct command objects
+  * Null Object
+    * Often times returning a "null command" can be useful instead of returning null
+  * Composite
+    * A composite command can be useful
+    * Construct it with several "child" commands
+    * Execute() on the composite will call Execute on the child commands
+
+Patterns are often times related, in fact the command pattern lends itself very well to be used with factories, and you saw an example of that earlier were we had the command object implement factory interface. We also used the Null object mini pattern, where instead of returning null we return an object that implements the interface that is required but did it in a safe way.
+
+We can also use what is called a Composite command, if we have a command that has several child commands and when executed the execution applies to all the child command to, and that pattern is often used with the command pattern.
