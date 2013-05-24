@@ -191,7 +191,7 @@ public class Program2
     Console.WriteLine("Usage: LoggingDemo CommandName Arguments");
     Console.WriteLine("Commands:");
     foreach(var command in availableCommands)
-      Console.WriteLine(" {0}, command.Description);
+      Console.WriteLine(" {0}", command.Description);
   }
 }
 }}}
@@ -219,7 +219,7 @@ public class UpdateQuantityCommand : ICommand, ICommandFactory
   }
 
   public string CommandName { get { return "UpdateQuantity"; } }
-  public string Description { get { return "UpdateQuantity number; } }
+  public string Description { get { return "UpdateQuantity number"; } }
 
   public ICommand MakeCommand(string[] arguments)
   {
