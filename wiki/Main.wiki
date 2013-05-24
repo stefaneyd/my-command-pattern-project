@@ -139,3 +139,140 @@ So here is a pictorial view of the command pattern. There is a client out there 
     * Just add a new class (open/closed principal)
 
 Now because the client does not pass any arguments into this command, this makes it a little bit different than something like strategy. With strategy you have a very specific thing that you are doing and you are passing in some arguments that give the strategy some context. And it is just done in a different way depending on the strategy that is chosen. The command pattern is more general than that, it is not doing any one particular thing, a command can represent anything, could represent screwing in a lightbulb or painting a car whatever it could represent, but the client does not care about those details does not have to pass any arguments in, but a consequence of that is that the command has to be constructed with everything it needs in order to get its job done, before the client can execute it, when the client executes it that object needs to have all the context that it needs, its not going to get any context from the client. It needs to be able to have its own context when it is build. This often argus for having factories to build these things and you see an example of that when I show you some code in a minute. It is easy to add new commands to the system, this is an example of the Open Closed principle. If we have a system that is based on commands, then instead of going and modifying lets say the !CommandExecutor class in our !CommandExecutor for example when we want to add a new command we have to modify that class, so this class is not closed to modification which is what the Open Closed principle tells us is a good idea, it is a better idea to make sure that we don't have to update it every time we have a new command that we want to run, we like to just extend the system by creating a new command object, and when we use the command pattern that is the place that you get to. So with the command pattern it is pretty easy to satisfy the Open Closed principle by simply adding new commands when you need a new functionality.
+
+= Implementation Example =
+  * A command-line order management system
+  * Existing orders may be edited, and a log of all changes must be kept
+
+Now lets create the same command-line application but using the command pattern instead of the !CommandExecutor class.
+{{{
+class Program
+{
+  static void Main(string[] args)
+  {
+    Program2.Run(args);
+  }
+}
+}}}
+
+We are using Program2 instead of Program1 and now we are using the command pattern.
+
+{{{
+public class Program2
+{
+  public static void Run(string[] args)
+  {
+    var availableCommands = GetAvailableCommands();
+
+    if(args.Lenght == 0)
+    {
+      PrintUsage(availableCommands);
+      return;
+    }
+
+    var parser = new CommandParser(availableCommands);
+    var command = parser.ParseCommand(args);
+
+    command.Execute();
+  }
+
+  static IEnumerable<ICommandFactory> GetAvailableCommands()
+  {
+    return new ICommandFactory[]
+      {
+        new CreateOrderCommand(),
+        new UpdateQuantityCommand(),
+        new ShipOrderCommand(),
+      };
+  }
+
+  private static void PrintUsage(IEnumerable<ICommandFactory> availableCommands)
+  {
+    Console.WriteLine("Usage: LoggingDemo CommandName Arguments");
+    Console.WriteLine("Commands:");
+    foreach(var command in availableCommands)
+      Console.WriteLine(" {0}, command.Description);
+  }
+}
+}}}
+If we look at the Run method you can see that there is a command that comes back from !ParseCommand method and the command object implements ICommand.
+{{{
+public interface ICommand
+{
+  void Execute();
+}
+}}}
+Each command is a separate class that implements the ICommand. Now lets look at that command class.
+{{{
+public class UpdateQuantityCommand : ICommand, ICommandFactory
+{
+  public int NewQuantity { get; set; }
+
+  public void Execute()
+  {
+    // simulate updating a database
+    const int oldQuantity = 5;
+    Console.WriteLine("DATABASE: Updated");
+
+    // simulate logging
+    Console.WriteLine("LOG: Updated order quantity from {0} to {1}", oldQuantity, NewQuantity);
+  }
+
+  public string CommandName { get { return "UpdateQuantity"; } }
+  public string Description { get { return "UpdateQuantity number; } }
+
+  public ICommand MakeCommand(string[] arguments)
+  {
+    return new UpdateQuantityCommand {NewQuantity = int.Parse(arguments[1]) };
+  }
+}
+}}}
+Now the question is when a user passes a command argument how do we create these commands, that is where factories come in. We have something called ICommandFactory its job is to know something about the commands that it creates, the command name, description and how to create a instance of the command by parsing command-line arguments.
+{{{
+public interface ICommandFactory
+{
+  string CommandName { get; }
+  string Description { get; }
+
+  ICommand MakeCommand(string[] arguments);
+}
+}}}
+The !CommandParser takes the available commands and uses them to discover which command we want.
+{{{
+public class CommandParser
+{
+  readonly IEnumerable<ICommandFactory> availableCommands;
+
+  public CommandParser(IEnumerable<ICommandFactory> availableCommands)
+  {
+    this.availableCommands = availableCommands;
+  }
+
+  internal ICommand ParseCommand(string[] args)
+  {
+    var requestedCommandName = args[0];
+  
+    var command = FindRequestedCommand(requestedCommandName);
+    if(null == command)
+      return new NotFoundCommand { Name = requestedCommandName };
+
+    return command.MakeCommand(args);
+  }
+
+  ICommandFactory FindRequestedCommand(string commandName)
+  {
+    return availableCommands.FirstOrDefault(cmd => cmd.CommandName == commandName);
+  }
+}
+}}}
+
+{{{
+public class NotFoundCommand : ICommand
+{
+  public string Name { get; set; }
+  public void Execute()
+  {
+    Console.WriteLine("Couldn't find command: " + Name);
+  }
+}
+}}}
